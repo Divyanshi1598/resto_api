@@ -56,7 +56,7 @@ app.use(cors());
 app.use(express.json());
 
 // MongoDB URI from environment
-const MONGO_URI = process.env.MONGODB_URI; //  Make sure this matches Render env variable name
+const MONGODB_URI = process.env.MONGODB_URI; //  Make sure this matches Render env variable name
 
 // Import routes
 const authRoutes = require('./routes/auth');
@@ -84,7 +84,7 @@ app.use((req, res) => {
 });
 
 // MongoDB Connection
-mongoose.connect(MONGO_URI, {
+mongoose.connect(MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
