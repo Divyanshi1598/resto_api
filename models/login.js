@@ -6,7 +6,15 @@ const userSchema = new mongoose.Schema({
   phoneNumber: { type: String, required: true },
   password: { type: String, required: true },
   termsAccepted: { type: Boolean, required: true },
-  // confirmPassword is not stored in DB, only used for validation
+  address: {
+    fullName: { type: String, required: true },
+    phoneNumber: { type: String, required: true },
+    street: { type: String, required: true },
+    city: { type: String, required: true },
+    state: { type: String, required: true },
+    zip: { type: String, required: true },
+    landmark: { type: String, required: false }
+  }
 });
 
 module.exports = mongoose.model('User', userSchema);

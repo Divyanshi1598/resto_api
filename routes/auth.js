@@ -31,7 +31,6 @@ router.post('/signup', async (req, res) => {
 });
 
 // Login
-// Login
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
   try {
@@ -41,13 +40,13 @@ router.post('/login', async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
 
-    // Create JWT token
-    const token = jwt.sign({ userId: user._id }, 'your_jwt_secret', { expiresIn: '1h' });
-
-    res.json({
+    res.json({ 
       message: 'Login successful',
-      token, // ✅ send the token
-      user: { email: user.email, fullName: user.fullName }
+      userId: user.email,
+      user: {
+        email: user.email,
+        fullName: user.fullName
+      }
     });
   } catch (err) {
     res.status(500).json({ message: 'Error logging in' });
@@ -88,5 +87,48 @@ router.post('/reset-password', async (req, res) => {
     }
   });
   
+
+// Add or update user address
+router.post('/address', async (req, res) => {
+  const { userId, address } = req.body;
+  try {
+    if (!userId) return res.status(400).json({ message: 'userId is required' });
+    if (!address) return res.status(400).json({ message: 'address is required' });
+    
+    // Validate required address fields
+    const requiredFields = ['fullName', 'phoneNumber', 'street', 'city', 'state', 'zip'];
+    for (const field of requiredFields) {
+      if (!address[field]) {
+        return res.status(400).json({ message: `${field} is required in address` });
+      }
+    }
+    
+    const user = await User.findOneAndUpdate({ email: userId }, { address }, { new: true });
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json({ message: 'Address updated successfully', address: user.address });
+  } catch (err) {
+    res.status(500).json({ message: 'Error updating address' });
+  }
+});
+
+// Get user address
+router.get('/address', async (req, res) => {
+  const { userId } = req.query;
+  try {
+    if (!userId) return res.status(400).json({ message: 'userId is required' });
+    
+    const user = await User.findOne({ email: userId });
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    
+    if (!user.address) {
+      return res.status(404).json({ message: 'No address found for this user' });
+    }
+    
+    res.json({ address: user.address });
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching address' });
+  }
+});
+
 
 module.exports = router;

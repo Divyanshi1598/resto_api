@@ -1,5 +1,7 @@
 const express = require('express');
 const Order = require('../models/order');
+const User = require('../models/login');
+const Payment = require('../models/payment');
 const router = express.Router();
 
 // GET order history for a user
@@ -14,16 +16,38 @@ router.get('/', async (req, res) => {
   }
 });
 
-// POST a new order
+// POST a new order with delivery address
 router.post('/', async (req, res) => {
-  const { userId, items, total } = req.body;
+  const { userId, items, totalAmount, deliveryAddress, orderDate, status } = req.body;
   try {
-    if (!userId || !items || !total) return res.status(400).json({ message: 'userId, items, and total are required' });
-    const order = new Order({ userId, items, total });
+    if (!userId || !items || !totalAmount || !deliveryAddress) {
+      return res.status(400).json({ 
+        message: 'userId, items, totalAmount, and deliveryAddress are required' 
+      });
+    }
+
+    // Validate delivery address
+    if (!deliveryAddress.fullName || !deliveryAddress.streetAddress || 
+        !deliveryAddress.city || !deliveryAddress.state || !deliveryAddress.zipCode) {
+      return res.status(400).json({ 
+        message: 'Complete delivery address is required' 
+      });
+    }
+
+    const order = new Order({ 
+      userId, 
+      items, 
+      total: totalAmount,
+      deliveryAddress,
+      orderDate: orderDate || new Date(),
+      status: status || 'pending'
+    });
+    
     await order.save();
     res.status(201).json(order);
   } catch (err) {
-    res.status(500).json({ message: 'Error placing order' });
+    console.error('Error placing order:', err);
+    res.status(500).json({ message: 'Error placing order: ' + err.message });
   }
 });
 
