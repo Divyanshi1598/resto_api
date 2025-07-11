@@ -6,14 +6,20 @@ const userSchema = new mongoose.Schema({
   phoneNumber: { type: String, required: true },
   password: { type: String, required: true },
   termsAccepted: { type: Boolean, required: true },
+  userType: {
+    type: String,
+    enum: ['admin', 'user'],
+    default: 'user',
+    required: true
+  },
   address: {
-    fullName: { type: String, required: true },
-    phoneNumber: { type: String, required: true },
-    street: { type: String, required: true },
-    city: { type: String, required: true },
-    state: { type: String, required: true },
-    zip: { type: String, required: true },
-    landmark: { type: String, required: false }
+    fullName: { type: String },
+    phoneNumber: { type: String },
+    street: { type: String },
+    city: { type: String },
+    state: { type: String },
+    zip: { type: String },
+    landmark: { type: String }
   }
 });
 

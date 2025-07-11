@@ -6,7 +6,7 @@ const router = express.Router();
 
 // Signup
 router.post('/signup', async (req, res) => {
-  const { fullName, email, phoneNumber, password, confirmPassword, termsAccepted } = req.body;
+  const { fullName, email, phoneNumber, password, confirmPassword, termsAccepted, userType } = req.body;
   try {
     // Validate all fields
     if (!fullName || !email || !phoneNumber || !password || !confirmPassword) {
@@ -22,11 +22,12 @@ router.post('/signup', async (req, res) => {
     if (existingUser) return res.status(400).json({ message: 'User already exists' });
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = new User({ fullName, email, phoneNumber, password: hashedPassword, termsAccepted });
+    const user = new User({ fullName, email, phoneNumber, password: hashedPassword, termsAccepted, userType: userType || 'user' });
     await user.save();
     res.status(201).json({ message: 'User created' });
   } catch (err) {
-    res.status(500).json({ message: 'Error creating user' });
+    console.error('Signup error:', err);
+    res.status(500).json({ message: 'Error creating user', error: err.message });
   }
 });
 
@@ -45,7 +46,8 @@ router.post('/login', async (req, res) => {
       userId: user.email,
       user: {
         email: user.email,
-        fullName: user.fullName
+        fullName: user.fullName,
+        userType: user.userType
       }
     });
   } catch (err) {
