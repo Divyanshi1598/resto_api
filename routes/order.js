@@ -16,6 +16,16 @@ router.get('/', async (req, res) => {
   }
 });
 
+// GET all orders (admin)
+router.get('/all', async (req, res) => {
+  try {
+    const orders = await Order.find();
+    res.json(orders);
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching all orders' });
+  }
+});
+
 // POST a new order with delivery address
 router.post('/', async (req, res) => {
   const { userId, items, totalAmount, deliveryAddress, orderDate, status } = req.body;
