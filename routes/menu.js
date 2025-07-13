@@ -3,28 +3,7 @@ const multer = require('multer');
 const path = require('path');
 const Menu = require('../models/menu');
 const router = express.Router();
-
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/');
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
-
-const upload = multer({ 
-  storage: storage,
-  fileFilter: function (req, file, cb) {
-    if (file.mimetype.startsWith('image/')) {
-      cb(null, true);
-    } else {
-      cb(new Error('Only image files are allowed!'), false);
-    }
-  }
-});
+const upload = require('../middleware/cloudinaryUpload');
 
 // GET all menu items or by userId
 router.get('/', async (req, res) => {
@@ -50,8 +29,8 @@ router.post('/', upload.single('image'), async (req, res) => {
     if (!userId) return res.status(400).json({ message: 'userId is required' });
     if (!req.file) return res.status(400).json({ message: 'Image file is required' });
     
-    // Generate proper image URL
-    const imageUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+    // Use Cloudinary image URL
+    const imageUrl = req.file.path;
     
     const menuItem = new Menu({ 
       userId, 
@@ -75,8 +54,8 @@ router.put('/:id', upload.single('image'), async (req, res) => {
     const { id } = req.params;
     const updateData = { ...req.body };
     if (req.file) {
-      // If a new image is uploaded, update the image URL
-      updateData.image = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+      // Use Cloudinary image URL
+      updateData.image = req.file.path;
     }
     const menuItem = await Menu.findByIdAndUpdate(id, updateData, { new: true });
     if (!menuItem) return res.status(404).json({ message: 'Menu item not found' });
