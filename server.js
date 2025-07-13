@@ -18,7 +18,12 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
-app.use('/uploads', express.static('uploads'));
+
+// Add CORS headers for static uploads
+app.use('/uploads', (req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  next();
+}, express.static('uploads'));
 
 // routes 
 app.use('/api/auth', authRoutes);
