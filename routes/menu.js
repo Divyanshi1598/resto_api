@@ -69,4 +69,33 @@ router.post('/', upload.single('image'), async (req, res) => {
   }
 });
 
+// PUT update a menu item by ID (with optional image upload)
+router.put('/:id', upload.single('image'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = { ...req.body };
+    if (req.file) {
+      // If a new image is uploaded, update the image URL
+      updateData.image = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+    }
+    const menuItem = await Menu.findByIdAndUpdate(id, updateData, { new: true });
+    if (!menuItem) return res.status(404).json({ message: 'Menu item not found' });
+    res.json({ message: 'Menu item updated', menuItem });
+  } catch (err) {
+    res.status(500).json({ message: 'Error updating menu item', error: err.message });
+  }
+});
+
+// DELETE a menu item by ID
+router.delete('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const menuItem = await Menu.findByIdAndDelete(id);
+    if (!menuItem) return res.status(404).json({ message: 'Menu item not found' });
+    res.json({ message: 'Menu item deleted' });
+  } catch (err) {
+    res.status(500).json({ message: 'Error deleting menu item', error: err.message });
+  }
+});
+
 module.exports = router; 
