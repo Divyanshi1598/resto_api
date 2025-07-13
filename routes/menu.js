@@ -3,27 +3,28 @@ const multer = require('multer');
 const path = require('path');
 const Menu = require('../models/menu');
 const router = express.Router();
-const cloudinary = require('cloudinary').v2;
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
-// Configure Cloudinary
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
-});
-
-// Configure multer-storage-cloudinary
-const storage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: {
-    folder: 'menu_images',
-    allowed_formats: ['jpg', 'jpeg', 'png', 'gif'],
-    transformation: [{ width: 800, height: 800, crop: 'limit' }]
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/');
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
   }
 });
 
-const upload = multer({ storage: storage });
+const upload = multer({ 
+  storage: storage,
+  fileFilter: function (req, file, cb) {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed!'), false);
+    }
+  }
+});
 
 // GET all menu items or by userId
 router.get('/', async (req, res) => {
@@ -50,7 +51,7 @@ router.post('/', upload.single('image'), async (req, res) => {
     if (!req.file) return res.status(400).json({ message: 'Image file is required' });
     
     // Generate proper image URL
-    const imageUrl = req.file.path; // CloudinaryStorage returns the secure URL
+    const imageUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
     
     const menuItem = new Menu({ 
       userId, 
@@ -75,7 +76,7 @@ router.put('/:id', upload.single('image'), async (req, res) => {
     const updateData = { ...req.body };
     if (req.file) {
       // If a new image is uploaded, update the image URL
-      updateData.image = req.file.path; // CloudinaryStorage returns the secure URL
+      updateData.image = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
     }
     const menuItem = await Menu.findByIdAndUpdate(id, updateData, { new: true });
     if (!menuItem) return res.status(404).json({ message: 'Menu item not found' });
